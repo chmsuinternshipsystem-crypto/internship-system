@@ -1,15 +1,11 @@
 {
   "build": {
-    "builder": "NIXPACKS",
-    "nixpacksConfig": {
-      "phpVersion": "8.2",
-      "composerVersion": "2"
-    }
+    "builder": "NIXPACKS"
   },
   "deploy": {
     "numReplicas": 1,
     "startCommand": "php artisan serve --host=0.0.0.0 --port=$PORT",
-    "healthcheckPath": "/",
+    "healthcheckPath": "/login",
     "restartPolicyType": "ON_FAILURE"
   }
 }
