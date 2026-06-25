@@ -24,7 +24,7 @@ return new class extends Migration
         // Backfill student accounts from legacy linked student users (role=student)
         DB::statement("
             INSERT INTO student_accounts (student_id, email, password, is_active, created_at, updated_at)
-            SELECT s.id, u.email, u.password, 1, NOW(), NOW()
+            SELECT s.id, u.email, u.password, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
             FROM students s
             INNER JOIN users u ON u.id = s.user_id
             WHERE u.role = 'student'
