@@ -44,7 +44,11 @@
             @endif
         </x-search-bar>
 
-        <div id="weekly-journals-ajax-mount">
+        <div id="weekly-journals-ajax-mount"
+             hx-trigger="refresh-journals from:body, every 30s"
+             hx-get="{{ route('weekly-journals.index', request()->query()) }}"
+             hx-target="#weekly-journals-ajax-mount"
+             hx-swap="innerHTML">
             @include('weekly-journals.partials.ajax-list')
         </div>
     </x-page-card>

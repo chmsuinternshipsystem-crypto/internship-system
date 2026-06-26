@@ -17,8 +17,9 @@
 
     <div class="py-8">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+            @php $evalOpen = session('section') === 'evaluation'; @endphp
             <div class="space-y-4"
-                 x-data="{ sections: { boundary: true, geofence: false, attendance: false, policy: false, evaluation: false, instructors: false } }">
+                 x-data="{ sections: { boundary: true, geofence: false, attendance: false, policy: false, evaluation: {{ $evalOpen ? 'true' : 'false' }}, instructors: false } }">
 
                 {{-- Campus Boundary Polygon --}}
                 <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -148,32 +149,7 @@
                                     </p>
                                     <x-input-error :messages="$errors->get('campus_radius_meters')" class="mt-1" />
                                 </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <x-input-label for="student_geofence_radius_meters" :value="__('Student pass radius (meters)')" />
-                                        <input id="student_geofence_radius_meters" name="student_geofence_radius_meters" type="number"
-                                            min="25" max="1000" step="5" inputmode="numeric"
-                                            value="{{ old('student_geofence_radius_meters', $campus->student_geofence_radius_meters ?? 100) }}"
-                                            required
-                                            class="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-600 focus:ring-emerald-600" />
-                                        <p class="mt-1 text-xs text-gray-600">
-                                            {{ __('Straight-line distance from the campus reference point (fallback when no polygon is set).') }}
-                                        </p>
-                                        <x-input-error :messages="$errors->get('student_geofence_radius_meters')" class="mt-1" />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="geofence_review_buffer_meters" :value="__('Near-boundary buffer (meters)')" />
-                                        <input id="geofence_review_buffer_meters" name="geofence_review_buffer_meters" type="number"
-                                            min="0" max="200" step="5" inputmode="numeric"
-                                            value="{{ old('geofence_review_buffer_meters', $campus->geofence_review_buffer_meters ?? 20) }}"
-                                            required
-                                            class="mt-1 block w-full rounded-md border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-600 focus:ring-emerald-600" />
-                                        <p class="mt-1 text-xs text-gray-600">
-                                            {{ __('Readings between "pass radius" and "pass + buffer" are marked for staff review (GPS uncertainty).') }}
-                                        </p>
-                                        <x-input-error :messages="$errors->get('geofence_review_buffer_meters')" class="mt-1" />
-                                    </div>
-                                </div>
+
                                 <p class="text-xs text-gray-600">
                                     <a href="https://www.google.com/maps?q={{ urlencode((string) $campus->campus_lat) }},{{ urlencode((string) $campus->campus_lng) }}"
                                        target="_blank" rel="noopener noreferrer"
@@ -441,63 +417,77 @@
                             @method('PUT')
                             <input type="hidden" name="section" value="evaluation_criteria">
 
-                            <div class="rounded-lg border border-rose-100 bg-rose-50/40 p-4 space-y-3">
-                                <p class="text-xs text-rose-800">
-                                    {{ __('Toggle criteria on/off or edit their labels. Changes affect all new evaluations.') }}
-                                </p>
+                            <p class="text-xs text-rose-800">
+                                {{ __('Toggle criteria on/off or edit their labels. Changes affect all new evaluations.') }}
+                            </p>
 
-                                @php $currentCategory = null; @endphp
-                                @foreach ($evaluationCriteria as $criterion)
-                                    @if ($currentCategory !== $criterion->category_key)
-                                        @if ($currentCategory !== null)
+                            @php
+                                $grouped = $evaluationCriteria->groupBy(fn ($c) => $c->category_key);
+                            @endphp
+
+                            @foreach ($grouped as $catKey => $items)
+                                @php $first = $items->first(); @endphp
+                                <div class="rounded-lg border border-gray-200 overflow-hidden">
+                                    <div class="bg-gray-50 px-4 py-2.5 border-b border-gray-200 flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-semibold text-gray-800">{{ $first->category_label }}</span>
+                                            <span class="text-xs text-gray-400">({{ $items->count() }})</span>
+                                        </div>
+                                    </div>
+                                    <div class="divide-y divide-gray-100">
+                                        @foreach ($items as $criterion)
+                                            <div class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50/50 transition-colors group">
+                                                <input type="hidden" name="criteria[{{ $criterion->id }}][id]" value="{{ $criterion->id }}">
+                                                <input type="checkbox"
+                                                       name="criteria[{{ $criterion->id }}][is_active]"
+                                                       value="1"
+                                                       @checked($criterion->is_active)
+                                                       class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-600 shrink-0">
+                                                <input type="text"
+                                                       name="criteria[{{ $criterion->id }}][item_label]"
+                                                       value="{{ $criterion->item_label }}"
+                                                       maxlength="255"
+                                                       class="flex-1 min-w-0 text-sm rounded-md border-gray-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600">
+                                                <x-confirm-delete
+                                                    :action="route('evaluations.criteria.destroy', $criterion)"
+                                                    :message="__('Remove this criterion? It will be hidden from all new evaluations.')"
+                                                    :dialog-id="'criterion-del-'.$criterion->id"
+                                                    wrapper-class="inline-flex shrink-0"
+                                                    class="inline-flex shrink-0"
+                                                >
+                                                    <i class="bi bi-x text-sm opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                                </x-confirm-delete>
                                             </div>
-                                        @endif
-                                        @php $currentCategory = $criterion->category_key; @endphp
-                                        <div class="bg-white rounded-lg border border-gray-200 p-3">
-                                            <p class="text-xs font-semibold text-gray-700 mb-2">{{ $criterion->category_label }}</p>
-                                    @endif
-                                    <div class="flex items-center gap-3 py-1">
-                                        <input type="hidden" name="criteria[{{ $criterion->id }}][id]" value="{{ $criterion->id }}">
-                                        <input type="checkbox"
-                                               name="criteria[{{ $criterion->id }}][is_active]"
-                                               value="1"
-                                               @checked($criterion->is_active)
-                                               class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-600 shrink-0">
-                                        <input type="text"
-                                               name="criteria[{{ $criterion->id }}][item_label]"
-                                               value="{{ $criterion->item_label }}"
-                                               maxlength="255"
-                                               class="block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600">
+                                        @endforeach
                                     </div>
-                                @endforeach
-                                @if ($currentCategory !== null)
-                                    </div>
-                                @endif
-
-                                <div class="border-t pt-3 mt-3">
-                                    <p class="text-xs font-semibold text-gray-700 mb-2">{{ __('Add New Criterion') }}</p>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <input type="text" name="new_criteria[category_key]" maxlength="50"
-                                               placeholder="{{ __('Category key (e.g. work_habits)') }}"
-                                               class="block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600">
-                                        <input type="text" name="new_criteria[category_label]" maxlength="120"
-                                               placeholder="{{ __('Category label (e.g. Work Habits)') }}"
-                                               class="block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600">
-                                        <input type="text" name="new_criteria[item_key]" maxlength="50"
-                                               placeholder="{{ __('Item key (e.g. punctual)') }}"
-                                               class="block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600">
-                                        <input type="text" name="new_criteria[item_label]" maxlength="255"
-                                               placeholder="{{ __('Item label (e.g. Punctual)') }}"
-                                               class="block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600">
+                                    <div class="border-t border-dashed border-gray-200" x-data="{ open: false }">
+                                        <div x-show="open" x-cloak class="flex items-center gap-2 px-4 py-2 bg-rose-50/30">
+                                            <input type="text" name="new_criteria[{{ $catKey }}][item_label]" maxlength="255" required
+                                                   :disabled="!open"
+                                                   placeholder="{{ __('New item label...') }}"
+                                                   class="flex-1 min-w-0 text-sm rounded-md border-gray-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600">
+                                            <input type="hidden" name="new_criteria[{{ $catKey }}][category_key]" value="{{ $catKey }}"
+                                                   :disabled="!open">
+                                            <button type="submit"
+                                                    class="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 shadow-sm shrink-0">
+                                                <i class="bi bi-plus me-1"></i>{{ __('Add') }}
+                                            </button>
+                                        </div>
+                                        <button type="button" @click="open = !open"
+                                                class="w-full flex items-center justify-center gap-1 px-4 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors">
+                                            <i class="bi bi-plus-circle" x-show="!open"></i>
+                                            <i class="bi bi-dash-circle" x-show="open" x-cloak></i>
+                                            <span x-text="open ? '{{ __('Cancel') }}' : '{{ __('Add item') }}'"></span>
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
+                            @endforeach
 
                             <div class="flex justify-end">
                                 <button type="submit"
                                         class="inline-flex items-center rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 shadow-sm">
                                     <i class="bi bi-save me-1.5"></i>
-                                    {{ __('Save Criteria') }}
+                                    {{ __('Save Changes') }}
                                 </button>
                             </div>
                         </form>

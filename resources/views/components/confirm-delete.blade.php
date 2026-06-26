@@ -4,12 +4,14 @@
     'title' => null,
     /** Optional stable id for a11y (e.g. per-row model id) */
     'dialogId' => null,
+    /** Override wrapper div class (default: block w-full) */
+    'wrapperClass' => 'block w-full',
 ])
 @php
     $did = $dialogId ?? 'confirm-delete-'.substr(md5((string) $action), 0, 12);
     $heading = $title ?? __('Confirm deletion');
 @endphp
-<div x-data="{ confirmOpen: false }" class="block w-full">
+<div x-data="{ confirmOpen: false }" class="{{ $wrapperClass }}">
     <button
         type="button"
         {{ $attributes->merge(['class' => 'action-menu-item action-danger']) }}

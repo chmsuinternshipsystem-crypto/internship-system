@@ -170,6 +170,10 @@ class StudentPortalController extends Controller
             ->whereIn('status', ['active', 'completed'])
             ->exists();
 
+        $hasCompletedDeployment = $student->deployments()
+            ->where('status', 'completed')
+            ->exists();
+
         $requiredDocuments = RequiredDocument::query()
             ->where(function ($query) use ($activeCompanyId): void {
                 $query->whereNull('company_id');
@@ -177,7 +181,8 @@ class StudentPortalController extends Controller
                     $query->orWhere('company_id', $activeCompanyId);
                 }
             })
-            ->when(! $hasActiveDeployment, fn ($q) => $q->where('phase', '!=', 'monitoring'))
+            ->when(! $hasActiveDeployment, fn ($q) => $q->whereNotIn('phase', ['monitoring', 'post']))
+            ->when($hasActiveDeployment && ! $hasCompletedDeployment, fn ($q) => $q->where('phase', '!=', 'post'))
             ->orderBy('order_index')
             ->orderBy('name')
             ->get();

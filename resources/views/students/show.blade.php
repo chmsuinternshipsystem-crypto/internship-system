@@ -35,8 +35,44 @@
     </x-slot>
 
     <div class="py-12"
-         x-data="{ tab: window.location.hash.replace('#', '') || 'profile' }"
-         x-init="$watch('tab', val => history.replaceState(null, '', '#' + val))"
+         x-data="{
+             tab: window.location.hash.replace('#', '') || 'profile',
+             loadedTabs: {},
+             init() {
+                 this.$watch('tab', val => {
+                     history.replaceState(null, '', '#' + val);
+                     this.loadTab(val);
+                 });
+                 this.loadTab(this.tab);
+             },
+              loadTab(val) {
+                  if (val === 'profile' || val === 'documents') return;
+                  if (this.loadedTabs[val] === undefined) {
+                      this.loadedTabs[val] = 0;
+                  }
+                  this.loadedTabs[val]++;
+                  const version = this.loadedTabs[val];
+                  if (val === 'journals') {
+                      if (window.htmx) {
+                          htmx.ajax('GET', '{{ route('students.tab.journals', $student) }}', {target: '#journals-tab-content', swap: 'innerHTML'});
+                      }
+                  } else if (val === 'dtr') {
+                      fetch('{{ route('students.tab.dtr', $student) }}')
+                          .then(r => r.text())
+                          .then(html => { if (version === this.loadedTabs[val]) document.getElementById('dtr-tab-content').innerHTML = html; })
+                          .catch(() => { if (version === this.loadedTabs[val]) document.getElementById('dtr-tab-content').textContent = 'Failed to load DTR.'; });
+                  } else if (val === 'attendance') {
+                      fetch('{{ route('students.tab.attendance', $student) }}')
+                          .then(r => r.text())
+                          .then(html => { if (version === this.loadedTabs[val]) document.getElementById('attendance-tab-content').innerHTML = html; })
+                          .catch(() => { if (version === this.loadedTabs[val]) document.getElementById('attendance-tab-content').textContent = 'Failed to load attendance.'; });
+                  } else if (val === 'certificates') {
+                      if (window.htmx) {
+                          htmx.ajax('GET', '{{ route('students.tab.certificates', $student) }}', {target: '#certificates-tab-content', swap: 'innerHTML'});
+                      }
+                  }
+              }
+         }"
     >
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             {{-- Tab navigation --}}
@@ -65,39 +101,25 @@
                 <div x-show="tab === 'documents'" x-cloak role="tabpanel">
                     @include('students.partials.tab-documents')
                 </div>
-                <div x-show="tab === 'journals'" x-cloak role="tabpanel"
-                     x-init="htmx.ajax('GET', '{{ route('students.tab.journals', $student) }}', {target: '#journals-tab-content', swap: 'innerHTML'})">
+                <div x-show="tab === 'journals'" x-cloak role="tabpanel">
                     <div id="journals-tab-content" class="py-8 text-center text-gray-400">
                         <i class="bi bi-arrow-repeat text-2xl animate-spin inline-block"></i>
                         <p class="mt-2 text-sm">{{ __('Loading journals...') }}</p>
                     </div>
                 </div>
-                <div x-show="tab === 'dtr'" x-cloak role="tabpanel"
-                     x-init="
-                         fetch('{{ route('students.tab.dtr', $student) }}')
-                             .then(r => r.text())
-                             .then(html => { document.getElementById('dtr-tab-content').innerHTML = html; })
-                             .catch(e => { document.getElementById('dtr-tab-content').innerHTML = '<div class=\'py-8 text-center text-gray-500\'>Failed to load DTR.</div>'; });
-                     ">
+                <div x-show="tab === 'dtr'" x-cloak role="tabpanel">
                     <div id="dtr-tab-content" class="py-8 text-center text-gray-400">
                         <i class="bi bi-arrow-repeat text-2xl animate-spin inline-block"></i>
                         <p class="mt-2 text-sm">{{ __('Loading DTR...') }}</p>
                     </div>
                 </div>
-                <div x-show="tab === 'attendance'" x-cloak role="tabpanel"
-                     x-init="
-                         fetch('{{ route('students.tab.attendance', $student) }}')
-                             .then(r => r.text())
-                             .then(html => { document.getElementById('attendance-tab-content').innerHTML = html; })
-                             .catch(e => { document.getElementById('attendance-tab-content').innerHTML = '<div class=\'py-8 text-center text-gray-500\'>Failed to load attendance.</div>'; });
-                     ">
+                <div x-show="tab === 'attendance'" x-cloak role="tabpanel">
                     <div id="attendance-tab-content" class="py-8 text-center text-gray-400">
                         <i class="bi bi-arrow-repeat text-2xl animate-spin inline-block"></i>
                         <p class="mt-2 text-sm">{{ __('Loading attendance...') }}</p>
                     </div>
                 </div>
-                <div x-show="tab === 'certificates'" x-cloak role="tabpanel"
-                     x-init="htmx.ajax('GET', '{{ route('students.tab.certificates', $student) }}', {target: '#certificates-tab-content', swap: 'innerHTML'})">
+                <div x-show="tab === 'certificates'" x-cloak role="tabpanel">
                     <div id="certificates-tab-content" class="py-8 text-center text-gray-400">
                         <i class="bi bi-arrow-repeat text-2xl animate-spin inline-block"></i>
                         <p class="mt-2 text-sm">{{ __('Loading certificates...') }}</p>

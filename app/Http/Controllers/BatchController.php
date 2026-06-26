@@ -7,8 +7,11 @@ use App\Models\Certificate;
 use App\Models\Company;
 use App\Models\Deployment;
 use App\Models\Student;
+use App\Models\StudentDocument;
 use App\Models\User;
 use App\Models\WeeklyJournal;
+use App\Services\DocumentWorkflowEngine;
+use App\Services\NotificationService;
 use App\Support\StudentListSearch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -108,7 +111,9 @@ class BatchController extends Controller
                 }
             });
 
-            return back()->with('status', __(':count student(s) deployed to :company.', [
+            $referer = $request->header('referer', route('students.index'));
+
+            return redirect($referer)->with('status', __(':count student(s) deployed to :company.', [
                 'count' => $count,
                 'company' => $company->name,
             ]))->with('status_type', 'success')->with('batch_cleared', true);
@@ -120,14 +125,16 @@ class BatchController extends Controller
 
             $query->update(['assigned_instructor_id' => $instructorId]);
             $count = $selectAll ? $query->count() : count($validated['ids'] ?? []);
+            $referer = $request->header('referer', route('students.index'));
 
-            return back()->with('status', __(':count student(s) assigned to :instructor.', [
+            return redirect($referer)->with('status', __(':count student(s) assigned to :instructor.', [
                 'count' => $count,
                 'instructor' => $instructor->name,
             ]))->with('status_type', 'success')->with('batch_cleared', true);
         }
 
-        return back();
+        $referer = $request->header('referer', route('students.index'));
+        return redirect($referer);
     }
 
     public function attendance(Request $request)
@@ -182,6 +189,36 @@ class BatchController extends Controller
             ]);
 
         return back()->with('status', __(':count certificate(s) verified.', ['count' => $count]))
+            ->with('status_type', 'success');
+    }
+
+    public function documents(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:student_documents,id'],
+            'action' => ['required', 'in:approve'],
+        ]);
+
+        $role = (string) (auth()->user()?->role ?? '');
+        $engine = app(DocumentWorkflowEngine::class);
+        $count = 0;
+
+        $docs = StudentDocument::with('student', 'requiredDocument', 'student.account', 'student.assignedInstructor')
+            ->whereIn('id', $validated['ids'])
+            ->get();
+
+        foreach ($docs as $doc) {
+            $allowed = $engine->allowedActions($doc, $role);
+            if (! in_array('approve', $allowed, true)) {
+                continue;
+            }
+
+            $engine->applyAction($doc, $role, 'approve');
+            $count++;
+        }
+
+        return back()->with('status', __(':count document(s) approved.', ['count' => $count]))
             ->with('status_type', 'success');
     }
 }

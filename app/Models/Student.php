@@ -258,9 +258,18 @@ class Student extends Model
      */
     public function getProgressPctComputedAttribute(): int
     {
-        $mandatoryIds = RequiredDocument::query()
-            ->where('is_mandatory', true)
-            ->pluck('id');
+        $hasActive = $this->deployments()->whereIn('status', ['active', 'completed'])->exists();
+        $hasCompleted = $this->deployments()->where('status', 'completed')->exists();
+
+        $mandatoryQuery = RequiredDocument::query()->where('is_mandatory', true);
+
+        if (! $hasActive) {
+            $mandatoryQuery->whereNotIn('phase', ['monitoring', 'post']);
+        } elseif (! $hasCompleted) {
+            $mandatoryQuery->where('phase', '!=', 'post');
+        }
+
+        $mandatoryIds = $mandatoryQuery->pluck('id');
 
         if ($mandatoryIds->isEmpty()) {
             return 0;

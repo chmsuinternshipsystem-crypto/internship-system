@@ -88,6 +88,13 @@ function notificationBell() {
             } catch (e) {
                 // silently fail
             }
+            // Dispatch page-specific refresh events so visible pages auto-update
+            window.dispatchEvent(new CustomEvent('refresh-inbox'));
+            window.dispatchEvent(new CustomEvent('refresh-attendance'));
+            window.dispatchEvent(new CustomEvent('reload-queue'));
+            window.dispatchEvent(new CustomEvent('refresh-journals'));
+            window.dispatchEvent(new CustomEvent('refresh-compliance'));
+            window.dispatchEvent(new CustomEvent('refresh-dashboard'));
         },
         toggle() {
             this.open = !this.open;

@@ -10,3 +10,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command('flags:check')->daily();
 Schedule::command('reminders:send')->hourly();
+Schedule::command('deployments:auto-complete')->daily();
+Schedule::command('attendance:auto-resolve')->daily();

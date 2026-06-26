@@ -9,6 +9,7 @@ use App\Services\GeofencingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class CampusSettingController extends Controller
 {
@@ -76,8 +77,6 @@ class CampusSettingController extends Controller
             'campus_lat' => ['required', 'numeric', 'between:-90,90'],
             'campus_lng' => ['required', 'numeric', 'between:-180,180'],
             'campus_radius_meters' => ['required', 'integer', 'min:50', 'max:2000'],
-            'student_geofence_radius_meters' => ['required', 'integer', 'min:25', 'max:1000'],
-            'geofence_review_buffer_meters' => ['required', 'integer', 'min:0', 'max:200'],
         ]);
 
         $campus->update($data);
@@ -191,22 +190,28 @@ class CampusSettingController extends Controller
 
         if ($request->has('new_criteria')) {
             $newData = $request->validate([
-                'new_criteria.category_key' => ['required', 'string', 'max:50'],
-                'new_criteria.category_label' => ['required', 'string', 'max:120'],
-                'new_criteria.item_key' => ['required', 'string', 'max:50'],
-                'new_criteria.item_label' => ['required', 'string', 'max:255'],
+                'new_criteria' => ['required', 'array'],
+                'new_criteria.*.category_key' => ['required', 'string', 'max:50'],
+                'new_criteria.*.item_label' => ['required', 'string', 'max:255'],
             ]);
 
-            $maxOrder = EvaluationCriterion::where('category_key', $newData['new_criteria']['category_key'])->max('sort_order') ?? 0;
+            foreach ($newData['new_criteria'] as $entry) {
+                $catKey = trim(strip_tags($entry['category_key']));
+                $existing = EvaluationCriterion::where('category_key', $catKey)->first();
+                $categoryLabel = $existing ? $existing->category_label : Str::title(str_replace('_', ' ', $catKey));
+                $itemLabel = trim(strip_tags($entry['item_label']));
+                $itemKey = Str::snake($itemLabel);
+                $maxOrder = EvaluationCriterion::where('category_key', $catKey)->max('sort_order') ?? 0;
 
-            EvaluationCriterion::create([
-                'category_key' => trim(strip_tags($newData['new_criteria']['category_key'])),
-                'category_label' => trim(strip_tags($newData['new_criteria']['category_label'])),
-                'item_key' => trim(strip_tags($newData['new_criteria']['item_key'])),
-                'item_label' => trim(strip_tags($newData['new_criteria']['item_label'])),
-                'sort_order' => $maxOrder + 1,
-                'is_active' => true,
-            ]);
+                EvaluationCriterion::create([
+                    'category_key' => $catKey,
+                    'category_label' => $categoryLabel,
+                    'item_key' => $itemKey,
+                    'item_label' => $itemLabel,
+                    'sort_order' => $maxOrder + 1,
+                    'is_active' => true,
+                ]);
+            }
         }
 
         EvaluationCriterion::flushCriteriaCache();
@@ -246,8 +251,6 @@ class CampusSettingController extends Controller
             'campus_lat' => ['required', 'numeric', 'between:-90,90'],
             'campus_lng' => ['required', 'numeric', 'between:-180,180'],
             'campus_radius_meters' => ['required', 'integer', 'min:50', 'max:2000'],
-            'student_geofence_radius_meters' => ['required', 'integer', 'min:25', 'max:1000'],
-            'geofence_review_buffer_meters' => ['required', 'integer', 'min:0', 'max:200'],
             'campus_boundary_buffer_meters' => ['required', 'integer', 'min:5', 'max:100'],
             'campus_boundary' => ['nullable', 'json'],
             'attendance_am_time_in_start' => ['required', 'date_format:H:i'],

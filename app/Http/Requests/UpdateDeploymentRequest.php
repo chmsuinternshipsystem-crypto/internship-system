@@ -100,20 +100,6 @@ class UpdateDeploymentRequest extends FormRequest
                 }
             }
 
-            // Flag section conflict
-            $student = Student::find($studentId);
-            if ($student && $student->section) {
-                $sameSectionOthers = Deployment::query()
-                    ->whereHas('student', fn ($q) => $q->where('section', $student->section))
-                    ->where('student_id', '!=', $studentId)
-                    ->where('status', 'active')
-                    ->when($deploymentId, fn ($q) => $q->where('id', '!=', $deploymentId))
-                    ->exists();
-
-                if ($sameSectionOthers) {
-                    $validator->errors()->add('section_warning', __('Warning: Section :section already has active deployments for other students.', ['section' => $student->section]));
-                }
-            }
         });
     }
 

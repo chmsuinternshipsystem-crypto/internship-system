@@ -11,6 +11,7 @@ use App\Models\StudentDocument;
 use App\Models\StudentRiskFlag;
 use App\Models\WeeklyJournal;
 use Carbon\Carbon;
+use App\Services\NotificationService;
 use Illuminate\Console\Command;
 
 class CheckRiskFlags extends Command
@@ -158,6 +159,27 @@ class CheckRiskFlags extends Command
 
             StudentRiskFlag::create($flag);
             $created++;
+
+            $student = Student::find($flag['student_id']);
+            if ($student && $student->account) {
+                app(NotificationService::class)->notifyStudentAccount($student->account, [
+                    'event_type' => 'risk_flag.created',
+                    'title' => __('Risk Flagged'),
+                    'body' => $flag['message'] ?? __('A risk flag has been raised for your account. Please check your compliance status.'),
+                    'action_url' => $student->hasFullStudentPortalAccess() ? route('student.dashboard') : route('student.documents'),
+                ]);
+            }
+            if ($student && $student->assignedInstructor) {
+                app(NotificationService::class)->notifyUser($student->assignedInstructor, [
+                    'event_type' => 'risk_flag.created',
+                    'title' => __('Risk Flagged'),
+                    'body' => __(':name has been flagged: :message', [
+                        'name' => $student->name,
+                        'message' => $flag['message'] ?? __('Unspecified risk'),
+                    ]),
+                    'action_url' => route('compliance.index', ['risk' => 1]),
+                ]);
+            }
         }
 
         // --- Resolve flags that no longer apply ---

@@ -188,6 +188,7 @@
         $phases = [
             'pre' => ['label' => __('Pre-Requirements'), 'icon' => 'bi-file-earmark-check', 'color' => 'text-emerald-600', 'bg' => 'bg-emerald-50', 'ring' => 'ring-emerald-200'],
             'monitoring' => ['label' => __('Monitoring Requirements'), 'icon' => 'bi-eye', 'color' => 'text-blue-600', 'bg' => 'bg-blue-50', 'ring' => 'ring-blue-200'],
+            'post' => ['label' => __('Post-Requirements'), 'icon' => 'bi-check2-all', 'color' => 'text-purple-600', 'bg' => 'bg-purple-50', 'ring' => 'ring-purple-200'],
             'all' => ['label' => __('General Requirements'), 'icon' => 'bi-folder', 'color' => 'text-gray-600', 'bg' => 'bg-gray-50', 'ring' => 'ring-gray-200'],
         ];
         $grouped = $visibleRequiredDocuments->groupBy(fn ($doc) => $doc->phase ?? 'all');

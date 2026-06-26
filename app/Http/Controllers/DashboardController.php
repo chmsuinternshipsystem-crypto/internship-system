@@ -36,6 +36,14 @@ class DashboardController extends Controller
             ->when($role === 'instructor', fn ($q) => $q->whereHas('student', fn ($sq) => $sq->where('assigned_instructor_id', auth()->id())))
             ->count();
 
+        $partial = request()->query('partial');
+
+        if ($partial === 'kpi') {
+            return view('dashboard-partials.kpi-cards', compact(
+                'kpiCards', 'atRiskCount', 'sectionCompliance', 'evalSummary', 'complianceSummary'
+            ));
+        }
+
         return view('dashboard', compact(
             'kpiCards',
             'sectionCompliance',

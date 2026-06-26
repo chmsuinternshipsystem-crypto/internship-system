@@ -6,6 +6,7 @@
         </div>
     </x-slot>
 
+    <div id="student-dashboard-content">
     {{-- Completion banner --}}
     @if (! empty($showCompletion) && $showCompletion)
         <x-page-card compact class="mb-6 border-emerald-200 bg-emerald-50/50">
@@ -373,6 +374,8 @@
         </div>
     </div>
 
+    </div>
+
     @push('scripts')
     <script>
         function quickClock() {
@@ -415,12 +418,24 @@
                                     this.qcToastSuccess = true;
                                     this.qcToastMessage = data.action_label + ' @ ' + data.time;
                                     this.qcToastShow = true;
-                                    setTimeout(() => { window.location.reload(); }, 2000);
+                                    setTimeout(() => {
+                                        if (window.htmx) {
+                                            htmx.ajax('GET', window.location.href, {target: '#student-dashboard-content', swap: 'innerHTML'});
+                                        } else {
+                                            window.location.reload();
+                                        }
+                                    }, 1500);
                                 } else {
                                     this.qcToastSuccess = false;
                                     this.qcToastMessage = data.error || '{{ __('Clock failed. Redirecting...') }}';
                                     this.qcToastShow = true;
-                                    setTimeout(() => { window.location.reload(); }, 1500);
+                                    setTimeout(() => {
+                                        if (window.htmx) {
+                                            htmx.ajax('GET', window.location.href, {target: '#student-dashboard-content', swap: 'innerHTML'});
+                                        } else {
+                                            window.location.reload();
+                                        }
+                                    }, 1000);
                                 }
                             })
                             .catch(() => {
@@ -428,7 +443,13 @@
                                 this.qcToastSuccess = false;
                                 this.qcToastMessage = '{{ __('Network error. Redirecting...') }}';
                                 this.qcToastShow = true;
-                                setTimeout(() => { window.location.reload(); }, 1500);
+                                setTimeout(() => {
+                                    if (window.htmx) {
+                                        htmx.ajax('GET', window.location.href, {target: '#student-dashboard-content', swap: 'innerHTML'});
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                }, 1000);
                             });
                         },
                         () => {

@@ -77,7 +77,11 @@
                         <span class="inline-flex items-center gap-1.5"><span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">LOW</span><span class="text-gray-300">—</span>{{ __('On track') }}</span>
                     </div>
                 </div>
-                <div id="compliance-ajax-mount">
+                <div id="compliance-ajax-mount"
+                     hx-trigger="refresh-compliance from:body, every 30s"
+                     hx-get="{{ route('compliance.index', request()->query()) }}"
+                     hx-target="#compliance-ajax-mount"
+                     hx-swap="innerHTML">
                     @include('compliance.partials.ajax-list')
                 </div>
             @endif

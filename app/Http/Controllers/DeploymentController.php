@@ -53,9 +53,48 @@ class DeploymentController extends Controller
         return view('deployments.index', $viewData);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    public function create()
+    {
+        $students = Student::with('deployments')
+            ->whereDoesntHave('deployments', function ($q) {
+                $q->whereIn('status', ['active', 'completed'])
+                  ->orWhere(function ($sub) {
+                      $sub->where('status', 'pending')->whereNotNull('company_id');
+                  });
+            })
+            ->orderBy('student_number')
+            ->get();
+        $companies = Company::orderBy('name')->get();
+
+        return view('deployments.create', compact('students', 'companies'));
+    }
+
+    public function store(\Illuminate\Http\Request $request)
+    {
+        $data = $request->validate([
+            'student_id' => ['required', 'integer', 'exists:students,id'],
+            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+        ]);
+
+        $student = Student::findOrFail((int) $data['student_id']);
+
+        $deployment = Deployment::create([
+            'student_id' => $student->id,
+            'company_id' => ! empty($data['company_id']) ? (int) $data['company_id'] : null,
+            'start_date' => today(),
+            'status' => 'pending',
+        ]);
+
+        if ($student->areAllPreDocsApproved()) {
+            $student->autoActivateDeployment();
+        }
+
+        return redirect()
+            ->route('deployments.index')
+            ->with('status', __('Deployment created successfully.'))
+            ->with('status_type', 'success');
+    }
+
     /**
      * Display the specified resource.
      */

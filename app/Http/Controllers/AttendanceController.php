@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Models\Student;
 use App\Models\StudentAccount;
 use App\Services\GeofencingService;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -283,6 +284,24 @@ class AttendanceController extends Controller
                     'status' => 'completed',
                     'end_date' => now()->toDateString(),
                 ])->save();
+
+                app(NotificationService::class)->notifyStudentAccount($student->account, [
+                    'event_type' => 'deployment.completed',
+                    'title' => __('Deployment Completed'),
+                    'body' => __('Congratulations! You have completed 600 hours of internship. Your deployment is now marked as completed.'),
+                    'action_url' => route('student.dashboard'),
+                ]);
+
+                if ($student->assignedInstructor) {
+                    app(NotificationService::class)->notifyUser($student->assignedInstructor, [
+                        'event_type' => 'deployment.completed',
+                        'title' => __('Deployment Completed'),
+                        'body' => __(":name has completed their 600-hour internship and the deployment has been auto-completed.", [
+                            'name' => $student->name,
+                        ]),
+                        'action_url' => route('students.show', $student),
+                    ]);
+                }
             }
         }
 

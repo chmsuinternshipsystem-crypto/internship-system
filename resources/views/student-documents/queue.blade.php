@@ -50,13 +50,19 @@
                     </select>
                     @if ((auth()->user()?->role ?? '') === 'instructor')
                     <label class="inline-flex items-center gap-1.5 text-xs text-gray-600 whitespace-nowrap">
-                        <input type="checkbox" name="my_students" value="1" @checked($myStudents ?? false) class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-600">
+                        <input type="hidden" name="my_students" value="0">
+                        <input type="checkbox" name="my_students" value="1" @checked($myStudents ?? true) class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-600"
+                               onchange="this.closest('form').requestSubmit()">
                         {{ __('My Students') }}
                     </label>
                     @endif
                 </x-search-bar>
 
-                <div id="queue-table-wrapper">
+                <div id="queue-table-wrapper"
+                     hx-trigger="every 30s"
+                     hx-get="{{ route('student-documents.queue', request()->query()) }}"
+                     hx-target="#queue-table-wrapper"
+                     hx-swap="innerHTML">
                     @include('student-documents.partials.queue-table')
                 </div>
             </x-page-card>

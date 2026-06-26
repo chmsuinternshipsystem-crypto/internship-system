@@ -161,7 +161,8 @@ class StudentDocumentController extends Controller
             $documentsQuery->whereHas('student', fn ($q) => $q->where('section', $sectionFilter));
         }
 
-        if ($request->boolean('my_students')) {
+        $myStudents = $request->has('my_students') ? $request->boolean('my_students') : true;
+        if ($myStudents) {
             $documentsQuery->whereHas('student', fn ($q) => $q->where('assigned_instructor_id', auth()->id()));
         }
 
@@ -241,7 +242,7 @@ class StudentDocumentController extends Controller
             ->values();
 
         $sectionOptions = ['A', 'B', 'C', 'D'];
-        $myStudents = $request->boolean('my_students');
+        $myStudents = $request->has('my_students') ? $request->boolean('my_students') : true;
 
         if ($request->header('HX-Request')) {
             return view('student-documents.partials.queue-table', compact(

@@ -142,6 +142,7 @@ class CompanyController extends Controller
 
         // Load initial assignable students for the Add Students panel
         $students = Student::with('assignedInstructor')
+            ->whereIn('ojt_type', ['unplaced', 'external'])
             ->whereDoesntHave('deployments', function ($q) {
                 $q->whereIn('status', ['active', 'completed'])
                   ->orWhere(function ($sub) {
@@ -165,6 +166,7 @@ class CompanyController extends Controller
         $myStudents = $request->boolean('my_students');
 
         $query = Student::with('assignedInstructor')
+            ->whereIn('ojt_type', ['unplaced', 'external'])
             ->whereDoesntHave('deployments', function ($q) {
                 $q->whereIn('status', ['active', 'completed'])
                   ->orWhere(function ($sub) {

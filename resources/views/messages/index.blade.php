@@ -32,11 +32,11 @@
                             <i class="bi bi-pencil-square"></i>
                         </button>
                     </div>
-                    <div id="message-inbox-column"
-                         hx-trigger="refresh-inbox from:body"
-                         hx-get="{{ route($isStudentPortal ? 'student.messages.index' : 'messages.index') }}"
-                         hx-target="#message-inbox-column"
-                         hx-swap="innerHTML">
+                     <div id="message-inbox-column"
+                          hx-trigger="refresh-inbox from:body, every 30s"
+                          hx-get="{{ route($isStudentPortal ? 'student.messages.index' : 'messages.index') }}"
+                          hx-target="#message-inbox-column"
+                          hx-swap="innerHTML">
                         @include('messages.partials.inbox-column')
                     </div>
                 </div>

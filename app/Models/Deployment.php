@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Models\DailyTimeRecord;
 use App\Models\MonthlyDttr;
+use App\Models\WeeklyJournal;
 use App\Support\HasDeleteProtection;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -84,6 +86,53 @@ class Deployment extends Model
             }
 
             $deployment->status = $status;
+        });
+
+        static::saved(function (Deployment $deployment): void {
+            if ($deployment->status !== 'active' || ! $deployment->start_date) {
+                return;
+            }
+
+            $student = $deployment->student;
+            if (! $student) {
+                return;
+            }
+
+            // Generate attendance passcode on activation
+            $account = $student->account;
+            if ($account && empty($account->attendance_passcode)) {
+                $account->ensureAttendancePasscode();
+            }
+
+            // Create weekly journal weeks on activation
+            $existingWeeks = WeeklyJournal::where('student_id', $student->id)->count();
+            if ($existingWeeks > 0) {
+                return;
+            }
+
+            $cursor = $deployment->start_date->copy()->startOfWeek();
+            $end = $deployment->end_date
+                ? $deployment->end_date->copy()->endOfWeek()
+                : now()->endOfWeek();
+
+            $weekNumber = 1;
+            while ($cursor->lte($end)) {
+                WeeklyJournal::withoutEvents(function () use ($student, $cursor, $weekNumber): void {
+                    WeeklyJournal::firstOrCreate(
+                        [
+                            'student_id' => $student->id,
+                            'week_number' => $weekNumber,
+                        ],
+                        [
+                            'week_start_date' => $cursor->copy(),
+                            'week_end_date' => $cursor->copy()->next(Carbon::SATURDAY),
+                            'status' => 'draft',
+                        ]
+                    );
+                });
+                $cursor->addWeek();
+                $weekNumber++;
+            }
         });
     }
 

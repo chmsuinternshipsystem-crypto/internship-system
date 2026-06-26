@@ -92,6 +92,11 @@ class StoreStudentRequest extends FormRequest
                 'integer',
                 'exists:users,id',
             ],
+            'company_id' => [
+                'nullable',
+                'integer',
+                'exists:companies,id',
+            ],
         ];
     }
 

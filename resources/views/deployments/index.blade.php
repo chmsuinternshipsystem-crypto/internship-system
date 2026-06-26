@@ -20,6 +20,14 @@
     </x-slot>
 
     <x-page-card compact>
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-semibold text-gray-700">{{ __('All Deployments') }}</p>
+            @if ($canManage)
+                <a href="{{ route('deployments.create') }}" class="inline-flex items-center rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 shadow-sm">
+                    <i class="bi bi-plus-lg me-1"></i>{{ __('Add Deployment') }}
+                </a>
+            @endif
+        </div>
         <div class="flex flex-col sm:flex-row gap-3 mb-3">
             <div class="flex-1">
                 <x-search-bar

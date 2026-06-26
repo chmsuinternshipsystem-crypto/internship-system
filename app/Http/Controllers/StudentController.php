@@ -139,12 +139,16 @@ class StudentController extends Controller
                 'is_active' => true,
             ]);
 
-            Deployment::create([
+            $deployment = Deployment::create([
                 'student_id' => $student->id,
                 'company_id' => null,
                 'start_date' => today(),
                 'status' => 'pending',
             ]);
+
+            if (($data['ojt_type'] ?? '') === 'external' && ! empty($data['company_id'])) {
+                $deployment->update(['company_id' => (int) $data['company_id']]);
+            }
         });
 
         $message = __('Student profile created successfully.');
@@ -245,14 +249,22 @@ class StudentController extends Controller
         $instructors = User::where('role', 'instructor')->orderBy('name')->get();
         $ojtTypes = ['unplaced' => 'No Placement Yet', 'internal' => 'Internal OJT (School-based)', 'external' => 'External OJT (With Company)'];
 
-        return view('students.edit', compact('student', 'instructors', 'ojtTypes'));
+        $latestDeployment = $student->deployments()->latest()->first();
+        $hasActiveDeployment = $latestDeployment && in_array($latestDeployment->status, ['active', 'completed']);
+        $isPendingDeployment = $latestDeployment && $latestDeployment->status === 'pending';
+        $selectedCompanyId = $latestDeployment?->company_id;
+
+        return view('students.edit', compact('student', 'instructors', 'ojtTypes', 'hasActiveDeployment', 'isPendingDeployment', 'selectedCompanyId'));
     }
 
     public function update(UpdateStudentRequest $request, Student $student)
     {
         $data = $request->validated();
 
-        DB::transaction(function () use ($student, $data): void {
+        $latestDeployment = $student->deployments()->latest()->first();
+        $companyLocked = $latestDeployment && in_array($latestDeployment->status, ['active', 'completed']);
+
+        DB::transaction(function () use ($student, $data, $companyLocked, $latestDeployment): void {
             $account = $student->account;
             if (! $account) {
                 $account = StudentAccount::create([
@@ -271,11 +283,7 @@ class StudentController extends Controller
                 $account->save();
             }
 
-            $student->fill([
-                'last_name' => $data['last_name'],
-                'first_name' => $data['first_name'],
-                'middle_name' => $data['middle_name'] ?? null,
-                'name_extension' => $data['name_extension'] ?? null,
+            $fillData = [
                 'student_number' => $data['student_number'],
                 'program' => $data['program'],
                 'year_level' => $data['year_level'],
@@ -283,9 +291,25 @@ class StudentController extends Controller
                 'contact_number' => $data['contact_number'],
                 'ojt_type' => $data['ojt_type'] ?? 'unplaced',
                 'assigned_instructor_id' => $data['assigned_instructor_id'] ?? null,
-            ]);
+            ];
 
+            $nameLocked = $companyLocked || ($latestDeployment && $latestDeployment->status === 'pending');
+            if (! $nameLocked) {
+                $fillData['last_name'] = $data['last_name'];
+                $fillData['first_name'] = $data['first_name'];
+                $fillData['middle_name'] = $data['middle_name'] ?? null;
+                $fillData['name_extension'] = $data['name_extension'] ?? null;
+            }
+
+            $student->fill($fillData);
             $student->save();
+
+            if (! $companyLocked && ($data['ojt_type'] ?? '') === 'external' && ! empty($data['company_id'])) {
+                $pending = $student->deployments()->where('status', 'pending')->latest()->first();
+                if ($pending) {
+                    $pending->update(['company_id' => (int) $data['company_id']]);
+                }
+            }
         });
 
         return redirect()

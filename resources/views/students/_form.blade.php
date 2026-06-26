@@ -5,6 +5,13 @@
         && $student->last_name === null
         && $student->first_name === null
         && filled($student->name);
+
+    $hasActiveDeployment = $hasActiveDeployment ?? false;
+    $isPendingDeployment = $isPendingDeployment ?? false;
+    $nameLocked = $hasActiveDeployment || $isPendingDeployment;
+    $companyLocked = $hasActiveDeployment;
+
+    $currentOjt = old('ojt_type', $student->ojt_type ?? 'unplaced');
 @endphp
 
 @csrf
@@ -55,15 +62,18 @@
     <div class="form-group-float md:col-span-1">
         <input id="first_name" name="first_name" type="text" required maxlength="120"
                value="{{ old('first_name', $student->first_name ?? '') }}"
-               class="float-input @error('first_name') is-invalid @enderror" autocomplete="given-name" placeholder=" " title="{{ __('e.g. Juan') }}"/>
+               class="float-input @error('first_name') is-invalid @enderror" autocomplete="given-name" placeholder=" " title="{{ __('e.g. Juan') }}"
+               {{ $nameLocked ? 'readonly' : '' }}/>
         <label for="first_name" class="float-label">{{ __('First name') }} <span class="text-red-500">*</span></label>
         @error('first_name') <div class="mt-1 text-sm text-red-600">{{ $message }}</div> @enderror
+        @if ($nameLocked) <small class="hint-text">{{ __('Name locked — student has an active or pending deployment.') }}</small> @endif
     </div>
 
     <div class="form-group-float md:col-span-1">
         <input id="last_name" name="last_name" type="text" required maxlength="120"
                value="{{ old('last_name', $student->last_name ?? '') }}"
-               class="float-input @error('last_name') is-invalid @enderror" autocomplete="family-name" placeholder=" " title="{{ __('e.g. Dela Cruz') }}"/>
+               class="float-input @error('last_name') is-invalid @enderror" autocomplete="family-name" placeholder=" " title="{{ __('e.g. Dela Cruz') }}"
+               {{ $nameLocked ? 'readonly' : '' }}/>
         <label for="last_name" class="float-label">{{ __('Last name') }} <span class="text-red-500">*</span></label>
         @error('last_name') <div class="mt-1 text-sm text-red-600">{{ $message }}</div> @enderror
     </div>
@@ -71,14 +81,19 @@
     <div class="form-group-float md:col-span-1">
         <input id="middle_name" name="middle_name" type="text" maxlength="120"
                value="{{ old('middle_name', $student->middle_name ?? '') }}"
-               class="float-input @error('middle_name') is-invalid @enderror" autocomplete="additional-name" placeholder=" " title="{{ __('e.g. Santos') }}"/>
+               class="float-input @error('middle_name') is-invalid @enderror" autocomplete="additional-name" placeholder=" " title="{{ __('e.g. Santos') }}"
+               {{ $nameLocked ? 'readonly' : '' }}/>
         <label for="middle_name" class="float-label">{{ __('Middle name') }}</label>
         @error('middle_name') <div class="mt-1 text-sm text-red-600">{{ $message }}</div> @enderror
         <small class="hint-text">{{ __('Optional. Full middle name.') }}</small>
     </div>
 
     <div class="form-group-float select-wrap md:col-span-1">
-        <select id="name_extension" name="name_extension" class="float-select @error('name_extension') is-invalid @enderror">
+        @if ($nameLocked)
+            <input type="hidden" name="name_extension" value="{{ old('name_extension', $student->name_extension ?? '') }}">
+        @endif
+        <select id="name_extension" name="name_extension" class="float-select @error('name_extension') is-invalid @enderror"
+                {{ $nameLocked ? 'disabled' : '' }}>
             <option value="">{{ __('No extension') }}</option>
             @foreach (['Jr.', 'Sr.', 'II', 'III', 'IV', 'V'] as $option)
                 <option value="{{ $option }}" @selected(old('name_extension', $student->name_extension ?? '') === $option)>{{ $option }}</option>
@@ -163,7 +178,8 @@
     </div>
 
     {{-- Section 3: OJT Assignment --}}
-    <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+    <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+         x-data="{ ojtType: '{{ $currentOjt ?? 'unplaced' }}' }">
         <button type="button" @click="sections.ojt = !sections.ojt"
                 class="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-gray-50 transition-colors">
             <div class="flex items-center gap-2.5">
@@ -179,34 +195,52 @@
         </button>
         <div x-show="sections.ojt" x-collapse.duration.200ms>
             <div class="px-5 pb-5 space-y-3">
-                @php $currentOjt = old('ojt_type', $student->ojt_type ?? 'unplaced'); @endphp
-                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors
-                    {{ $currentOjt === 'unplaced' ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 hover:bg-gray-50' }}">
-                    <input type="radio" name="ojt_type" value="unplaced" @checked($currentOjt === 'unplaced')
-                           class="mt-0.5 h-4 w-4 text-emerald-600 focus:ring-emerald-500">
+                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                       :class="ojtType === 'unplaced' ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 hover:bg-gray-50'">
+                    <input type="radio" name="ojt_type" value="unplaced" x-model="ojtType"
+                           class="mt-0.5 h-4 w-4 text-emerald-600 focus:ring-emerald-500"
+                           {{ $companyLocked ? 'disabled' : '' }}>
                     <div>
                         <p class="text-sm font-semibold text-gray-900">{{ __('No Placement Yet') }}</p>
                         <p class="text-xs text-gray-500">{{ __('Student has not been assigned to any company or school department. Default state.') }}</p>
                     </div>
                 </label>
-                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors
-                    {{ $currentOjt === 'internal' ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 hover:bg-gray-50' }}">
-                    <input type="radio" name="ojt_type" value="internal" @checked($currentOjt === 'internal')
-                           class="mt-0.5 h-4 w-4 text-emerald-600 focus:ring-emerald-500">
+                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                       :class="ojtType === 'internal' ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 hover:bg-gray-50'">
+                    <input type="radio" name="ojt_type" value="internal" x-model="ojtType"
+                           class="mt-0.5 h-4 w-4 text-emerald-600 focus:ring-emerald-500"
+                           {{ $companyLocked ? 'disabled' : '' }}>
                     <div>
                         <p class="text-sm font-semibold text-gray-900">{{ __('Internal OJT (School-based)') }}</p>
                         <p class="text-xs text-gray-500">{{ __('Student will be deployed within the school — no external company required. Company field will be locked.') }}</p>
                     </div>
                 </label>
-                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors
-                    {{ $currentOjt === 'external' ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 hover:bg-gray-50' }}">
-                    <input type="radio" name="ojt_type" value="external" @checked($currentOjt === 'external')
-                           class="mt-0.5 h-4 w-4 text-emerald-600 focus:ring-emerald-500">
+                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                       :class="ojtType === 'external' ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 hover:bg-gray-50'">
+                    <input type="radio" name="ojt_type" value="external" x-model="ojtType"
+                           class="mt-0.5 h-4 w-4 text-emerald-600 focus:ring-emerald-500"
+                           {{ $companyLocked ? 'disabled' : '' }}>
                     <div>
                         <p class="text-sm font-semibold text-gray-900">{{ __('External OJT (With Company)') }}</p>
-                        <p class="text-xs text-gray-500">{{ __('Student will be assigned to a partner company for their OJT. Company must be set before deployment activates.') }}</p>
+                        <p class="text-xs text-gray-500">{{ __('Student will be assigned to a partner company for their OJT. Select a company below.') }}</p>
                     </div>
                 </label>
+
+                <div x-show="ojtType === 'external'" x-cloak class="pt-2">
+                    <x-input-label for="company_id" :value="__('Partner Company')" />
+                    <select id="company_id" name="company_id"
+                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm"
+                            {{ $companyLocked ? 'disabled' : '' }}>
+                        <option value="">{{ __('Select a company...') }}</option>
+                        @foreach (\App\Models\Company::orderBy('name')->get() as $company)
+                            <option value="{{ $company->id }}"
+                                @selected((int) old('company_id', $selectedCompanyId ?? 0) === $company->id)>
+                                {{ $company->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <x-input-error :messages="$errors->get('company_id')" class="mt-1" />
+                </div>
             </div>
         </div>
     </div>

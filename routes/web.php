@@ -159,6 +159,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance.index');
 
+        Route::get('evaluations/criteria', [EvaluationCriterionController::class, 'index'])->name('evaluations.criteria.index');
         Route::get('evaluations', [EvaluationController::class, 'index'])->name('evaluations.index');
         Route::get('evaluations/{evaluation}', [EvaluationController::class, 'show'])->name('evaluations.show');
         Route::get('evaluations/{evaluation}/export', [EvaluationController::class, 'export'])->name('evaluations.export.docx');
@@ -214,6 +215,8 @@ Route::middleware('auth')->group(function () {
         Route::put('company-industries/{company_industry}', [CompanyIndustryController::class, 'update'])->name('company-industries.update');
 
         // Deployment management (link students to companies)
+        Route::get('deployments/create', [DeploymentController::class, 'create'])->name('deployments.create');
+        Route::post('deployments', [DeploymentController::class, 'store'])->name('deployments.store');
         Route::get('deployments/{deployment}/edit', [DeploymentController::class, 'edit'])->name('deployments.edit');
         Route::put('deployments/{deployment}', [DeploymentController::class, 'update'])->name('deployments.update');
         Route::post('deployments/{deployment}/assign-company', [DeploymentController::class, 'assignCompany'])->name('deployments.assign-company');
@@ -230,7 +233,6 @@ Route::middleware('auth')->group(function () {
         Route::post('students/{student}/documents', [StudentDocumentController::class, 'update'])->name('student-documents.update');
 
         // Evaluations: performance evaluation records per student
-        Route::get('evaluations/criteria', [EvaluationCriterionController::class, 'index'])->name('evaluations.criteria.index');
         Route::post('evaluations/criteria', [EvaluationCriterionController::class, 'store'])->name('evaluations.criteria.store');
         Route::delete('evaluations/criteria/{criterion}', [EvaluationCriterionController::class, 'destroy'])->name('evaluations.criteria.destroy');
         Route::post('evaluations', [EvaluationController::class, 'store'])->name('evaluations.store');

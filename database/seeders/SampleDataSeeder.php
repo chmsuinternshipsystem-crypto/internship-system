@@ -248,6 +248,16 @@ class SampleDataSeeder extends Seeder
             ['description' => 'OJT training/work plan (personalized)', 'is_mandatory' => true, 'order_index' => 12, 'phase' => 'monitoring']
         );
 
+        // --- Post-Requirements (2 documents, visible after deployment completes) ---
+        RequiredDocument::updateOrCreate(
+            ['name' => 'Final DTR'],
+            ['description' => 'Signed and accomplished Daily Time Record for the entire internship period', 'is_mandatory' => true, 'order_index' => 13, 'phase' => 'post']
+        );
+        RequiredDocument::updateOrCreate(
+            ['name' => 'Final Weekly Journal'],
+            ['description' => 'Compiled and signed weekly journals for the entire internship period', 'is_mandatory' => true, 'order_index' => 14, 'phase' => 'post']
+        );
+
         // --- Deployments (unique: student_id + company_id + start_date) ---
         Deployment::updateOrCreate(
             [

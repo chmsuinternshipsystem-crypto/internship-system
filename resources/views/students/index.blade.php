@@ -32,20 +32,20 @@
             :action="route('students.index')"
             :value="$search"
             :placeholder="__('Student number, name, section, contact, or status...')"
-            hxTarget="#students-ajax-mount"
+            hxTarget="#students-table-mount"
             :showClear="$hasActiveFilters"
             sticky
         >
             <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 text-xs font-medium">
-                <a href="{{ route('students.index', ['deployment_status' => '', 'section' => $section ?? '', 'search' => $search ?? '', 'my_students' => $myStudents ?? '']) }}"
+                <a href="{{ route('students.index', ['deployment_status' => '', 'section' => $section ?? '', 'search' => $search ?? '', 'my_students' => $myStudents ?? '', 'page' => request()->query('page', '')]) }}"
                    class="px-3 py-1.5 rounded-md transition-colors {{ ($deploymentStatus ?? '') === '' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
                     {{ __('All') }}
                 </a>
-                <a href="{{ route('students.index', ['deployment_status' => 'pending', 'section' => $section ?? '', 'search' => $search ?? '', 'my_students' => $myStudents ?? '']) }}"
+                <a href="{{ route('students.index', ['deployment_status' => 'pending', 'section' => $section ?? '', 'search' => $search ?? '', 'my_students' => $myStudents ?? '', 'page' => request()->query('page', '')]) }}"
                    class="px-3 py-1.5 rounded-md transition-colors {{ ($deploymentStatus ?? '') === 'pending' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
                     {{ __('Pending') }}
                 </a>
-                <a href="{{ route('students.index', ['deployment_status' => 'deployed', 'section' => $section ?? '', 'search' => $search ?? '', 'my_students' => $myStudents ?? '']) }}"
+                <a href="{{ route('students.index', ['deployment_status' => 'deployed', 'section' => $section ?? '', 'search' => $search ?? '', 'my_students' => $myStudents ?? '', 'page' => request()->query('page', '')]) }}"
                    class="px-3 py-1.5 rounded-md transition-colors {{ ($deploymentStatus ?? '') === 'deployed' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
                     {{ __('Deployed') }}
                 </a>
@@ -64,14 +64,22 @@
                 {{ __('My students') }}
             </label>
             @endif
+            <input type="hidden" name="no_company" value="0">
             <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs text-gray-600 ml-2">
                 <input type="checkbox" name="no_company" value="1" @checked($noCompany ?? false) class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-600"
                        onchange="this.closest('form').requestSubmit()">
                 {{ __('No Company') }}
             </label>
+            <input type="hidden" name="page" value="{{ request()->query('page', '') }}">
         </x-search-bar>
-        <div id="students-ajax-mount">
-            @include('students.partials.ajax-list')
+        <div x-data="batchSelect({{ $totalMatching ?? 0 }}, {{ session('batch_cleared', false) ? 'true' : 'false' }})"
+             x-init="restorePersisted()">
+            <div id="students-batch-bar">
+                @include('students.partials.batch-bar')
+            </div>
+            <div id="students-table-mount">
+                @include('students.partials.ajax-list')
+            </div>
         </div>
     </x-page-card>
 </x-app-layout>

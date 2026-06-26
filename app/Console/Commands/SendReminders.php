@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Models\StudentDocument;
 use App\Models\User;
 use App\Models\WeeklyJournal;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -46,6 +47,15 @@ class SendReminders extends Command
                     actionUrl: route('student.weekly-journals.show', $journal),
                     actionLabel: __('Open Journal'),
                 ));
+                app(NotificationService::class)->notifyStudentAccount($journal->student->account, [
+                    'event_type' => 'reminder.journal_due',
+                    'title' => __('Journal Due Tomorrow'),
+                    'body' => __('Week :week journal is due tomorrow (:date).', [
+                        'week' => $journal->week_number,
+                        'date' => $journal->week_end_date->format('M d, Y'),
+                    ]),
+                    'action_url' => route('student.weekly-journals.show', $journal),
+                ]);
                 $sent++;
             }
         }
@@ -70,6 +80,15 @@ class SendReminders extends Command
                     actionUrl: route('student.weekly-journals.show', $journal),
                     actionLabel: __('Submit Now'),
                 ));
+                app(NotificationService::class)->notifyStudentAccount($journal->student->account, [
+                    'event_type' => 'reminder.journal_overdue',
+                    'title' => __('Journal Overdue'),
+                    'body' => __('Week :week journal (due :date) is overdue.', [
+                        'week' => $journal->week_number,
+                        'date' => $journal->week_end_date->format('M d, Y'),
+                    ]),
+                    'action_url' => route('student.weekly-journals.show', $journal),
+                ]);
                 $sent++;
             }
         }
@@ -97,6 +116,12 @@ class SendReminders extends Command
                         actionUrl: route('attendance.check-in'),
                         actionLabel: __('Check In'),
                     ));
+                    app(NotificationService::class)->notifyStudentAccount($student->account, [
+                        'event_type' => 'reminder.attendance',
+                        'title' => __('Attendance Reminder'),
+                        'body' => __('You haven\'t checked in today. Please clock in for your internship.'),
+                        'action_url' => route('attendance.check-in'),
+                    ]);
                     $sent++;
                 }
             }
@@ -129,6 +154,14 @@ class SendReminders extends Command
                 actionUrl: route('student.documents'),
                 actionLabel: __('View Documents'),
             ));
+            app(NotificationService::class)->notifyStudentAccount($student->account, [
+                'event_type' => 'reminder.documents_pending',
+                'title' => __('Documents Pending'),
+                'body' => $count > 3
+                    ? __('You have :count documents pending for 7+ days.', ['count' => $count])
+                    : __('Pending: :names.', ['names' => $docNames]),
+                'action_url' => route('student.documents'),
+            ]);
             $sent++;
         }
 

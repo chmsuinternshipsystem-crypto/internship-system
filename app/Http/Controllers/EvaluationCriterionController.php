@@ -58,11 +58,25 @@ class EvaluationCriterionController extends Controller
     {
         $this->authorize('manage', Evaluation::class);
 
-        $criterion->update(['is_active' => false]);
+        $id = $criterion->id;
+        $criterion->delete();
+
+        $stillExists = EvaluationCriterion::find($id);
+        if ($stillExists) {
+            EvaluationCriterion::flushCriteriaCache();
+            return redirect()
+                ->route('settings.campus.edit')
+                ->with('status', __('Failed to remove criterion. Please try again.'))
+                ->with('status_type', 'error')
+                ->with('section', 'evaluation');
+        }
+
         EvaluationCriterion::flushCriteriaCache();
 
-        return redirect()->route('evaluations.criteria.index')
+        return redirect()
+            ->route('settings.campus.edit')
             ->with('status', __('Criterion removed.'))
-            ->with('status_type', 'success');
+            ->with('status_type', 'success')
+            ->with('section', 'evaluation');
     }
 }
