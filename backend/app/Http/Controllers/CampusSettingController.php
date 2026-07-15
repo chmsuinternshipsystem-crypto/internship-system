@@ -31,19 +31,23 @@ class CampusSettingController extends Controller
 
         $section = $request->input('section', 'all');
 
-        $response = match ($section) {
+        $hasEarlyReturn = match ($section) {
+            'evaluation_criteria' => $this->updateEvaluationCriteria($request),
+            'instructors' => $this->updateInstructors($request),
+            default => null,
+        };
+
+        if ($hasEarlyReturn) {
+            return $hasEarlyReturn;
+        }
+
+        match ($section) {
             'boundary' => $this->updateBoundary($request, $campus),
             'geofence' => $this->updateGeofence($request, $campus),
             'attendance' => $this->updateAttendance($request, $campus),
             'policy' => $this->updatePolicy($request, $campus),
-            'evaluation_criteria' => $this->updateEvaluationCriteria($request),
-            'instructors' => $this->updateInstructors($request),
             default => $this->updateAll($request, $campus),
         };
-
-        if ($response) {
-            return $response;
-        }
 
         Setting::flushCampusCache();
 

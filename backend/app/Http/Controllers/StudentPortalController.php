@@ -494,13 +494,13 @@ class StudentPortalController extends Controller
         $studentAccount = $request->attributes->get('studentAccount');
         $data = $request->validated();
 
-            if (filled($data['email'] ?? null)) {
-                $account->email = $data['email'];
-            }
-            if (filled($data['contact_number'] ?? null)) {
-                $student->contact_number = $data['contact_number'];
-            }
-            if (filled($data['password'] ?? null)) {
+        if (filled($data['email'] ?? null)) {
+            $studentAccount->email = $data['email'];
+        }
+        if (filled($data['contact_number'] ?? null)) {
+            $student->contact_number = $data['contact_number'];
+        }
+        if (filled($data['password'] ?? null)) {
             $studentAccount->password = bcrypt($data['password']);
         }
         $studentAccount->save();
