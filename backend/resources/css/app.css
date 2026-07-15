@@ -1,0 +1,32 @@
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import 'select2/dist/css/select2.css';
+@import 'flatpickr/dist/flatpickr.css';
+@import 'clockpicker/dist/jquery-clockpicker.min.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.flatpickr-input {
+    @apply bg-white;
+}
+
+[x-cloak] { display: none !important; }
+
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+}
+.htmx-request .htmx-indicator {
+    opacity: 1;
+}
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
+
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+.animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+}

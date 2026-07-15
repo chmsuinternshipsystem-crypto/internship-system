@@ -1,0 +1,222 @@
+<x-app-layout>
+    @php
+        $dashRole = auth()->user()?->role;
+        $navOk = fn (string $item) => $dashRole && \App\Support\InternshipRoles::staffSidebarShows($dashRole, $item);
+    @endphp
+    <x-slot name="header">
+        <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+            <div>
+                <p class="text-xs font-semibold tracking-wide text-emerald-600 uppercase">
+                    {{ __('System Intelligence') }}
+                </p>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('Overview') }}
+                </h2>
+                <p class="text-sm text-gray-500">
+                    @if ($navOk('students'))
+                        {{ __('Monitoring BSIS student deployments and document compliance this internship cycle.') }}
+                    @else
+                        {{ __('Partner company and document workflow access for this cycle.') }}
+                    @endif
+                </p>
+            </div>
+        </div>
+    </x-slot>
+
+    <div class="layout-section-y">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div id="dashboard-kpi-mount"
+                 hx-trigger="refresh-dashboard from:body, every 30s"
+                 hx-get="{{ url('/dashboard?partial=kpi') }}"
+                 hx-target="#dashboard-kpi-mount"
+                 hx-swap="innerHTML">
+                @include('dashboard-partials.kpi-cards')
+            </div>
+
+            @if ($evalSummary)
+            <div class="bg-white shadow-sm rounded-lg p-5">
+                <h3 class="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <i class="bi bi-star-fill text-violet-500"></i>
+                    {{ __('Evaluations Overview') }}
+                </h3>
+                <p class="mt-1 text-xs text-gray-500">{{ __('Student performance summary across evaluation types.') }}</p>
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="rounded-lg border border-gray-200 px-4 py-3">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">{{ __('Total Evaluations') }}</p>
+                        <p class="mt-1 text-2xl font-bold text-gray-900">{{ $evalSummary->total }}</p>
+                    </div>
+                    <div class="rounded-lg border border-gray-200 px-4 py-3">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">{{ __('Industry Avg') }}</p>
+                        <p class="mt-1 text-2xl font-bold text-gray-900">
+                            {{ $evalSummary->industryAvg ? number_format($evalSummary->industryAvg, 1) : '—' }}
+                            <span class="text-sm font-normal text-gray-500">/ 100</span>
+                        </p>
+                    </div>
+                    <div class="rounded-lg border border-gray-200 px-4 py-3">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">{{ __('School Avg') }}</p>
+                        <p class="mt-1 text-2xl font-bold text-gray-900">
+                            {{ $evalSummary->schoolAvg ? number_format($evalSummary->schoolAvg, 1) : '—' }}
+                            <span class="text-sm font-normal text-gray-500">/ 100</span>
+                        </p>
+                    </div>
+                    <div class="rounded-lg border border-gray-200 px-4 py-3">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">{{ __('Student Feedback') }}</p>
+                        <p class="mt-1 text-2xl font-bold text-gray-900">
+                            {{ $evalSummary->studentFeedbackAvg ? number_format($evalSummary->studentFeedbackAvg, 1) : '—' }}
+                            <span class="text-sm font-normal text-gray-500">/ 100</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Quick access & compliance teaser -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="{{ $navOk('compliance') ? 'lg:col-span-2' : 'lg:col-span-3' }} bg-white shadow-sm rounded-lg p-5">
+                    <h3 class="text-sm font-semibold text-gray-800">
+                        {{ __('Quick access') }}
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500">
+                        {{ __('Jump directly to the most used modules.') }}
+                    </p>
+
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        @if ($navOk('students'))
+                            <a href="{{ route('students.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-emerald-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Students') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Registry of BSIS interns') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('companies'))
+                            <a href="{{ route('companies.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-sky-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Companies') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Partner organizations') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('deployments'))
+                            <a href="{{ route('deployments.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-indigo-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Deployments') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Assignments & schedules') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('required-documents'))
+                            <a href="{{ route('required-documents.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-amber-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Required Documents') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Document checklist setup') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('compliance'))
+                            <a href="{{ route('compliance.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-emerald-600"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Requirements Overview') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('View Complete / In Progress / Needs Attention') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('evaluations'))
+                            <a href="{{ route('evaluations.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-violet-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Evaluations') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Student performance scores') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('reports'))
+                            <a href="{{ route('reports.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-cyan-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Reports') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Export PDF summaries') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('announcements'))
+                            <a href="{{ route('announcements.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-rose-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Announcements') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Share updates with students') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('workflow-queue'))
+                            <a href="{{ route('student-documents.queue') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-slate-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Document Queue') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Documents waiting on your role') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('messages'))
+                            <a href="{{ route('messages.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-teal-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Messages') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Staff and student threads') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                        @if ($navOk('attendance'))
+                            <a href="{{ route('attendance.index') }}" class="flex items-start gap-2 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                                <span class="mt-0.5 h-2 w-2 rounded-full bg-orange-500"></span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ __('Attendance') }}</p>
+                                    <p class="text-xs text-gray-500">{{ __('Check-ins and review flags') }}</p>
+                                </div>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+
+                @if ($navOk('compliance'))
+                <div class="bg-white shadow-sm rounded-lg p-5 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-800">
+                            {{ __('Requirements at a glance') }}
+                        </h3>
+                        <p class="mt-1 text-xs text-gray-500">
+                            {{ __('Quick snapshot of document submission status.') }}
+                        </p>
+
+                        <dl class="mt-4 space-y-1 text-xs">
+                            <div class="flex items-center justify-between">
+                                <dt class="text-gray-600">{{ __('Complete') }}</dt>
+                                <dd class="font-semibold text-emerald-700">{{ $complianceSummary['compliant'] }}</dd>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <dt class="text-gray-600">{{ __('In Progress') }}</dt>
+                                <dd class="font-semibold text-blue-700">{{ $complianceSummary['partial'] }}</dd>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <dt class="text-gray-600">{{ __('Needs Attention') }}</dt>
+                                <dd class="font-semibold text-red-700">{{ $complianceSummary['nonCompliant'] }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{{ route('compliance.index') }}"
+                           class="inline-flex w-full justify-center items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                            {{ __('Open Requirements Overview') }}
+                        </a>
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</x-app-layout>
