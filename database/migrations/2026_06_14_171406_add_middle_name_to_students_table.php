@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('students', function (Blueprint $table): void {
+            if (! Schema::hasColumn('students', 'middle_name')) {
+                $table->string('middle_name', 120)->nullable()->after('first_name');
+            }
+            if (Schema::hasColumn('students', 'middle_initial')) {
+                $table->dropColumn('middle_initial');
+            }
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('students', function (Blueprint $table): void {
+            if (! Schema::hasColumn('students', 'middle_initial')) {
+                $table->string('middle_initial', 5)->nullable()->after('first_name');
+            }
+            if (Schema::hasColumn('students', 'middle_name')) {
+                $table->dropColumn('middle_name');
+            }
+        });
+    }
+};

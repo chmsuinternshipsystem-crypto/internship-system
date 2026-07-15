@@ -35,8 +35,10 @@ opencode/
 # Test & debug
 .phpunit.result.cache
 .phpunit.cache
+.phpactor.json
 test_login.php
 response.html
+tools_attendance_debug.php
 0
 cookies.txt
 cookies2.txt
@@ -50,3 +52,8 @@ auth.json
 # Project scratch files
 *.docx
 *.txt
+
+# Laravel
+Homestead.json
+Homestead.yaml
+*.log
