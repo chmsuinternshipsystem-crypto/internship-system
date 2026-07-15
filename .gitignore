@@ -1,0 +1,52 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.backup
+.env.production
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+/public/build
+/public/hot
+/public/storage
+
+# Storage & cache
+/storage/*.key
+/storage/pail
+/bootstrap/cache/*
+
+# IDE & tools
+.agents/
+.cursor/
+.superpowers/
+opencode/
+/.idea
+/.vscode
+/.fleet
+/.nova
+/.zed
+
+# Test & debug
+.phpunit.result.cache
+.phpunit.cache
+test_login.php
+response.html
+0
+cookies.txt
+cookies2.txt
+headers.txt
+headers2.txt
+
+# Composer
+composer.phar
+auth.json
+
+# Project scratch files
+*.docx
+*.txt
