@@ -272,38 +272,7 @@ class AttendanceController extends Controller
 
         $todayAttendance->update($updateData);
 
-        // Auto-complete deployment if 600 hours reached AND all docs submitted
-        $totalMinutes = $student->getTotalAttendanceMinutes();
-        if ($totalMinutes >= 36000 && $student->areAllMandatoryDocsSubmitted()) {
-            $activeDeployment = $student->deployments()
-                ->where('status', 'active')
-                ->first();
-
-            if ($activeDeployment) {
-                $activeDeployment->forceFill([
-                    'status' => 'completed',
-                    'end_date' => now()->toDateString(),
-                ])->save();
-
-                app(NotificationService::class)->notifyStudentAccount($student->account, [
-                    'event_type' => 'deployment.completed',
-                    'title' => __('Deployment Completed'),
-                    'body' => __('Congratulations! You have completed 600 hours of internship. Your deployment is now marked as completed.'),
-                    'action_url' => route('student.dashboard'),
-                ]);
-
-                if ($student->assignedInstructor) {
-                    app(NotificationService::class)->notifyUser($student->assignedInstructor, [
-                        'event_type' => 'deployment.completed',
-                        'title' => __('Deployment Completed'),
-                        'body' => __(":name has completed their 600-hour internship and the deployment has been auto-completed.", [
-                            'name' => $student->name,
-                        ]),
-                        'action_url' => route('students.show', $student),
-                    ]);
-                }
-            }
-        }
+        $this->autoCompleteDeployment($student);
 
         $result = [
             'action' => $session['type'],
@@ -459,27 +428,7 @@ class AttendanceController extends Controller
             $attendance = $todayAttendance;
         }
 
-        // Auto-complete deployment if 600 hours reached AND all docs submitted (only on PM time-out)
-        if ($session['type'] === 'pm_time_out' && $student->getTotalAttendanceMinutes() >= 36000 && $student->areAllMandatoryDocsSubmitted()) {
-            $activeDeployment = $student->deployments()
-                ->where('status', 'active')
-                ->first();
-            if ($activeDeployment) {
-                $activeDeployment->forceFill([
-                    'status' => 'completed',
-                    'end_date' => now()->toDateString(),
-                ])->save();
-
-                // Notify student
-                if ($studentAccount = $student->studentAccount) {
-                    \App\Services\NotificationService::notifyStudentAccount($studentAccount, __('Deployment Completed'), __('Congratulations! You have completed 600 hours. Your deployment is now marked as completed.'));
-                }
-                // Notify instructor
-                if ($assignedInstructor = $student->assignedInstructor) {
-                    \App\Services\NotificationService::notifyUsers([$assignedInstructor], __('Deployment Completed'), __(':name has completed 600 hours and their deployment is now completed.', ['name' => $student->name]));
-                }
-            }
-        }
+        $this->autoCompleteDeployment($student);
 
         $hours = $totalMinutes !== null ? intdiv($totalMinutes, 60) : null;
         $mins = $totalMinutes !== null ? $totalMinutes % 60 : null;
@@ -622,6 +571,41 @@ class AttendanceController extends Controller
             'latestUpdatedAt',
             'myStudents',
         ));
+    }
+
+    private function autoCompleteDeployment(Student $student): void
+    {
+        if ($student->getTotalAttendanceMinutes() < 36000 || !$student->areAllMandatoryDocsSubmitted()) {
+            return;
+        }
+
+        $activeDeployment = $student->deployments()->where('status', 'active')->first();
+        if (! $activeDeployment) {
+            return;
+        }
+
+        $activeDeployment->forceFill([
+            'status' => 'completed',
+            'end_date' => now()->toDateString(),
+        ])->save();
+
+        if ($account = $student->account) {
+            app(NotificationService::class)->notifyStudentAccount($account, [
+                'event_type' => 'deployment.completed',
+                'title' => __('Deployment Completed'),
+                'body' => __('Congratulations! You have completed 600 hours of internship. Your deployment is now marked as completed.'),
+                'action_url' => route('student.dashboard'),
+            ]);
+        }
+
+        if ($student->assignedInstructor) {
+            app(NotificationService::class)->notifyUser($student->assignedInstructor, [
+                'event_type' => 'deployment.completed',
+                'title' => __('Deployment Completed'),
+                'body' => __(":name has completed their 600-hour internship and the deployment has been auto-completed.", ['name' => $student->name]),
+                'action_url' => route('students.show', $student),
+            ]);
+        }
     }
 
     /**
