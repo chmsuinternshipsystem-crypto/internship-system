@@ -195,7 +195,7 @@ class AuthenticatedSessionController extends Controller
         $studentName = (string) ($account->student->name ?? $account->student->student_number ?? __('Student'));
         try {
             Mail::to($email)->send(new StudentPortalOtpMail($studentName, $otpCode));
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             Log::warning('student_otp_resend_mail_failed', [
                 'student_account_id' => $account->id,
                 'message' => $e->getMessage(),

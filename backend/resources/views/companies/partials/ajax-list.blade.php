@@ -58,7 +58,7 @@
                                     <i class="bi bi-pencil"></i> {{ __('Edit') }}
                                 </a>
                                 <div class="action-divider"></div>
-                                <button type="button" @click="$dispatch('open-archive-modal', { id: {{ $company->id }}, name: '{{ addslashes($company->name) }}' })"
+                                <button type="button" @click="$dispatch('open-archive-modal', { id: {{ $company->id }}, name: @js($company->name) })"
                                     class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
                                     <i class="bi bi-archive"></i> {{ __('Archive') }}
                                 </button>

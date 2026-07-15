@@ -266,7 +266,7 @@ class MessageThreadController extends Controller
             }
         }
 
-        if (! empty($recipientIds)) {
+            if ($recipientIds !== []) {
             $this->notificationService->notifyUsers($recipientIds, [
                 'event_type' => 'message.new',
                 'title' => __('New message: :subject', ['subject' => $data['subject']]),
@@ -454,7 +454,7 @@ class MessageThreadController extends Controller
         }
 
         $staffParticipantIds = $participants->pluck('user_id')->filter()->values()->all();
-        if (! empty($staffParticipantIds)) {
+            if ($staffParticipantIds !== []) {
             $this->notificationService->notifyUsers($staffParticipantIds, [
                 'event_type' => 'message.reply',
                 'title' => __('New reply in ":subject"', ['subject' => $message->subject]),

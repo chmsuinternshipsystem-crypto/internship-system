@@ -22,15 +22,15 @@
     $oldSelectedStaff = array_map('strval', old('participant_ids', []));
     $oldSelectedStudents = array_map('strval', old('student_account_ids', array_map('strval', $preSelectedStudentIds ?? [])));
 
-    $messageFormJson = json_encode([
+    $messageFormData = [
         'staffData' => $recipientChipsData,
         'studentData' => $studentChipsData,
         'selectedStaff' => $oldSelectedStaff,
         'selectedStudents' => $oldSelectedStudents,
-    ]);
+    ];
 @endphp
 
-<script>window.__mfd = {!! $messageFormJson !!};</script>
+<script>window.__mfd = @js($messageFormData);</script>
 
 <form method="POST" action="{{ route($storeRoute) }}"
       @if ($isHtmxPartial) hx-post="{{ route($storeRoute) }}" hx-target="#message-conversation-panel" hx-swap="innerHTML" hx-disabled-elt="button[type=submit]" @endif

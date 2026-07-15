@@ -103,7 +103,7 @@
 
             @if (session('status'))
                 document.addEventListener('DOMContentLoaded', function () {
-                    window.showToast('{{ addslashes(session('status')) }}', '{{ session('status_type', 'success') }}', 5000, '{{ addslashes(session('undo_key', '')) }}');
+                    window.showToast(@js(session('status')), @js(session('status_type', 'success')), 5000, @js(session('undo_key', '')));
                 });
             @endif
 

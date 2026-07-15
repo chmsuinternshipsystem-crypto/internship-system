@@ -79,7 +79,7 @@ class BatchController extends Controller
             }
             $search = trim((string) ($validated['filter_search'] ?? ''));
             StudentListSearch::apply($query, $search);
-            if (! empty($validated['filter_my_students'])) {
+            if (filled($validated['filter_my_students'] ?? null)) {
                 $query->where('assigned_instructor_id', auth()->id());
             }
             $deploymentStatus = trim((string) ($validated['filter_deployment_status'] ?? ''));
@@ -88,14 +88,14 @@ class BatchController extends Controller
             } elseif ($deploymentStatus === 'deployed') {
                 $query->whereHas('deployments', fn ($q) => $q->whereIn('status', ['active', 'completed']));
             }
-            if (! empty($validated['filter_no_company'])) {
+            if (filled($validated['filter_no_company'] ?? null)) {
                 $query->whereHas('deployments', fn ($q) => $q->whereNull('company_id')->whereIn('status', ['pending', 'active']));
             }
         } else {
             $query->whereIn('id', $validated['ids'] ?? []);
         }
 
-        if ($selectAll && !empty($excludeIds)) {
+        if ($selectAll && $excludeIds !== []) {
             $query->whereNotIn('id', $excludeIds);
         }
 
@@ -145,7 +145,7 @@ class BatchController extends Controller
                     __('Students Assigned'),
                     __(':count student(s) have been assigned to you.', ['count' => $count])
                 );
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 report($e);
             }
 

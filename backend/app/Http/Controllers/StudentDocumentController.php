@@ -390,7 +390,7 @@ class StudentDocumentController extends Controller
 
             if ($status !== 'Submitted') {
                 $submittedAt = null;
-            } elseif (empty($submittedAt)) {
+            } else                if ($submittedAt === null || $submittedAt === '') {
                 $submittedAt = now()->toDateString();
             }
 

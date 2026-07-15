@@ -140,7 +140,7 @@
                             @endphp
                             <tr class="{{ $rowCls }}"
                                 @if($hasRecord)
-                                    @click="showDetail('{{ $date->format('l') }}', {{ $day }}, '{{ $amIn }}', '{{ $amOut }}', '{{ $pmIn }}', '{{ $pmOut }}', '{{ $hrs }}', '{{ addslashes($tasksText) }}', {{ $record->id }})"
+                                    @click="showDetail('{{ $date->format('l') }}', {{ $day }}, '{{ $amIn }}', '{{ $amOut }}', '{{ $pmIn }}', '{{ $pmOut }}', '{{ $hrs }}', @js($tasksText), {{ $record->id }})"
                                 @endif>
                                 <td class="px-2 py-2 whitespace-nowrap align-top">
                                     <div class="flex items-baseline gap-1.5">

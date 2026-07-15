@@ -94,7 +94,7 @@ class DeploymentController extends Controller
 
         $deployment = Deployment::create([
             'student_id' => $student->id,
-            'company_id' => ! empty($data['company_id']) ? (int) $data['company_id'] : null,
+            'company_id' => isset($data['company_id']) && $data['company_id'] !== '' ? (int) $data['company_id'] : null,
             'start_date' => today(),
             'status' => 'pending',
         ]);

@@ -13,8 +13,6 @@ use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Throwable;
-
 class HteTransactionController extends Controller
 {
     public function __construct(
@@ -101,7 +99,7 @@ class HteTransactionController extends Controller
                     'used_for' => 'evaluation',
                 ])->save();
             });
-        } catch (Throwable $e) {
+        } catch (\Exception $e) {
             report($e);
 
             return back()
@@ -194,7 +192,7 @@ class HteTransactionController extends Controller
                     'used_for' => 'document_upload',
                 ])->save();
             });
-        } catch (Throwable $e) {
+        } catch (\Exception $e) {
             report($e);
             Storage::disk('public')->delete($path);
 
@@ -212,7 +210,7 @@ class HteTransactionController extends Controller
                 $instructors = \App\Models\User::where('role', 'instructor')->get();
                 \App\Services\NotificationService::notifyUsers($instructors->all(), __('HTE Document Uploaded'), __('A document was uploaded via HTE link for :name.', ['name' => $student->name]));
             }
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             report($e);
         }
 

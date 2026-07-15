@@ -393,7 +393,7 @@ Route::get('address/cities/{province}', [\App\Http\Controllers\AddressController
 Route::get('address/barangays/{city}', [\App\Http\Controllers\AddressController::class, 'barangays'])->name('address.barangays');
 
 // In-app notifications for all authenticated users (staff + students; controller resolves notifiable)
-Route::prefix('notifications')->name('notifications.')->middleware('web')->group(function () {
+Route::prefix('notifications')->name('notifications.')->middleware(['web', 'auth'])->group(function () {
     Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
     Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');

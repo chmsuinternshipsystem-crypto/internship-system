@@ -241,7 +241,7 @@ class EvaluationController extends Controller
                 transactionUrl: $transactionUrl,
                 expiresAt: $link->expires_at,
             ));
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning('hte_link_mail_failed', [
                 'link_id' => $link->id,
                 'supervisor_email' => $link->supervisor_email,

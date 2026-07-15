@@ -49,8 +49,8 @@
                          provinceId: {{ old('province_id', $company->province_id ?? 'null') }},
                          cityId: {{ old('city_id', $company->city_id ?? 'null') }},
                          barangayId: {{ old('barangay_id', $company->barangay_id ?? 'null') }},
-                         cityName: '{{ addslashes(old('city_municipality', $company->city_municipality ?? '')) }}',
-                         barangayName: '{{ addslashes(old('barangay', $company->barangay ?? '')) }}',
+                         cityName: @js(old('city_municipality', $company->city_municipality ?? '')),
+                         barangayName: @js(old('barangay', $company->barangay ?? '')),
                      })">
                     <input type="hidden" name="province_id" x-model="provinceId">
                     <input type="hidden" name="city_municipality" x-model="cityNameText">

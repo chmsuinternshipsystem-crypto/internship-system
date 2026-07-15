@@ -126,8 +126,8 @@ class DashboardController extends Controller
                         SELECT id FROM required_documents WHERE is_mandatory = true
                     )
                     AND status = 'Submitted'
-                ) >= {$mandatoryCount} THEN 1 ELSE 0 END
-            ) as compliant_count")
+                ) >= ? THEN 1 ELSE 0 END
+            ) as compliant_count", [$mandatoryCount])
             ->groupBy('section')
             ->orderBy('section')
             ->get();

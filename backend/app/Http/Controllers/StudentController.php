@@ -178,7 +178,7 @@ class StudentController extends Controller
                 'status' => 'pending',
             ]);
 
-            if (($data['ojt_type'] ?? '') === 'external' && ! empty($data['company_id'])) {
+            if (($data['ojt_type'] ?? '') === 'external' && isset($data['company_id']) && $data['company_id'] !== '') {
                 $deployment->update(['company_id' => (int) $data['company_id']]);
             }
         });
@@ -306,7 +306,7 @@ class StudentController extends Controller
                     'is_active' => true,
                 ]);
             } else {
-                if (! empty($data['account_password'])) {
+                if (filled($data['account_password'] ?? null)) {
                     $account->password = Hash::make($data['account_password']);
                 }
                 if (array_key_exists('email', $data)) {
@@ -336,7 +336,7 @@ class StudentController extends Controller
             $student->fill($fillData);
             $student->save();
 
-            if (! $companyLocked && ($data['ojt_type'] ?? '') === 'external' && ! empty($data['company_id'])) {
+            if (! $companyLocked && ($data['ojt_type'] ?? '') === 'external' && isset($data['company_id']) && $data['company_id'] !== '') {
                 $pending = $student->deployments()->where('status', 'pending')->latest()->first();
                 if ($pending) {
                     $pending->update(['company_id' => (int) $data['company_id']]);
